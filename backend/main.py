@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -6,6 +6,7 @@ import uvicorn
 import json
 from src.agents.hypothesis_agent import create_agent_stream
 from src.agents.popup_optimization_agent import create_popup_agent_stream, create_popup_agent_stream_structured
+from src.agents.modification_agent import modify_popup_configuration, load_ui_schema
 import asyncio
 
 app = FastAPI(title="PopupGenius: AI-Powered E-Commerce Optimization API")
@@ -26,6 +27,11 @@ class ChatMessage(BaseModel):
 class PopupOptimizationRequest(BaseModel):
     business_description: str
     optimization_goals: str = ""
+
+
+class PopupImplementationRequest(BaseModel):
+    insights: str
+    current_config: dict
 
 
 @app.post("/chat")
@@ -134,6 +140,26 @@ async def popup_optimization_websocket_simple(websocket: WebSocket):
             "type": "error",
             "message": f"Error: {str(e)}"
         }))
+
+
+@app.post("/implement-popup-changes")
+async def implement_popup_changes(request: PopupImplementationRequest):
+    """Endpoint to implement popup changes based on analysis insights"""
+    try:
+        # Load UI schema for modification agent
+        ui_schema = load_ui_schema()
+        
+        # Use modification agent to create new popup configuration
+        modified_config = modify_popup_configuration(
+            instructions=request.insights,
+            current_config=request.current_config,
+            ui_schema_content=ui_schema
+        )
+        
+        return modified_config
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to implement changes: {str(e)}")
 
 
 @app.get("/health")

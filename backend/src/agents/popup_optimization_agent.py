@@ -37,25 +37,30 @@ class PopupOptimizationAgent:
         self.agent = Agent(
             name="PopupGenius",
             model="gpt-4.1",
-            instructions="""You are PopupGenius, an AI optimization expert specializing in e-commerce popup optimization.
+            instructions="""You are PopupGenius, an AI popup design expert specializing in e-commerce conversion optimization.
 
-                Your mission is to transform popup performance through real-time data analysis and competitive intelligence. You deliver instant, actionable optimization strategies that can increase conversion rates by 40-300%.
+                Your mission is to analyze user behavior and competitive landscape to provide specific, actionable popup design recommendations.
 
                 STREAMING RESPONSE STYLE:
-                - Use emoji progress indicators (🔄, 📊, 💡, ✨, 🎯, 💰, ⚡, 🚀)
-                - Provide specific metrics and dollar amounts
-                - Stream insights as they're discovered
-                - Always include ROI calculations
-                - Make recommendations actionable and measurable
+                - Use emoji progress indicators (🔄, 🎨, 💡, ✨, 🎯, ⚡, 🚀)
+                - Focus on design elements, not revenue numbers
+                - Stream insights about user behavior and design patterns
+                - Make recommendations specific and implementable
 
                 ANALYSIS FRAMEWORK:
-                1. 🔄 Historical Performance Analysis - identify conversion gaps and opportunities
-                2. 🔄 Transaction Pattern Analysis - discover customer behavior insights
-                3. 🔄 Competitive Intelligence - find market gaps and positioning opportunities
-                4. ✨ Final Recommendations - specific, actionable strategies with projected ROI
+                1. 🔄 User Behavior Analysis - understand how visitors interact with popups
+                2. 🔄 Design Pattern Analysis - identify effective design elements
+                3. 🔄 Competitive Research - discover successful popup designs in the market
+                4. ✨ Design Recommendations - specific changes to implement
 
-                For each analysis phase, stream progress updates and breakthrough insights in real-time.
-                Always conclude with specific popup design, copy, timing, and revenue projections.""",
+                FINAL OUTPUT SHOULD FOCUS ON:
+                - Visual design changes (colors, fonts, layout)
+                - Copy and messaging improvements
+                - Trigger timing and behavior
+                - Form elements and user experience
+                - Mobile vs desktop considerations
+
+                Avoid discussing revenue projections, sales numbers, or complex ROI calculations. Focus on actionable design changes.""",
             tools=[analyze_popup_history, analyze_transaction_data, analyze_competitors],
         )
 
@@ -72,9 +77,9 @@ class PopupOptimizationAgent:
         
         # Simulate tool execution for demo purposes
         tools = [
-            ("analyze_popup_history", "📊 Analyzing Historical Popup Performance"),
-            ("analyze_transaction_data", "💰 Analyzing Customer Transaction Patterns"),
-            ("analyze_competitors", "🌐 Conducting Competitive Intelligence Scan")
+            ("analyze_popup_history", "🎨 Analyzing Current Popup Design Performance"),
+            ("analyze_transaction_data", "👥 Understanding User Behavior Patterns"),
+            ("analyze_competitors", "🌐 Researching Competitor Design Strategies")
         ]
         
         for tool_name, tool_description in tools:
@@ -92,9 +97,9 @@ class PopupOptimizationAgent:
             
             # Send tool complete event with realistic insights
             tool_insights = {
-                "analyze_popup_history": "Found 62% improvement opportunity - current 10.4% vs industry 16.8%",
-                "analyze_transaction_data": "Discovered $495+ purchases have 340% higher intent signals",
-                "analyze_competitors": "Identified urgency tactics increasing conversions by 2.3x"
+                "analyze_popup_history": "Current design lacks visual hierarchy and urgency elements",
+                "analyze_transaction_data": "Users prefer single-step forms and exit-intent triggers",
+                "analyze_competitors": "Top performers use bold CTAs with contrasting colors"
             }
             
             yield {
@@ -140,9 +145,9 @@ class PopupOptimizationAgent:
                                 
                                 # Map tool names to user-friendly descriptions
                                 tool_descriptions_map = {
-                                    "analyze_popup_history": "📊 Analyzing Historical Popup Performance",
-                                    "analyze_transaction_data": "💰 Analyzing Customer Transaction Patterns", 
-                                    "analyze_competitors": "🌐 Conducting Competitive Intelligence Scan"
+                                    "analyze_popup_history": "🎨 Analyzing Current Popup Design Performance",
+                                    "analyze_transaction_data": "👥 Understanding User Behavior Patterns", 
+                                    "analyze_competitors": "🌐 Researching Competitor Design Strategies"
                                 }
                                 
                                 yield {
@@ -196,25 +201,26 @@ class PopupOptimizationAgent:
         except Exception as e:
             # If streaming fails, provide fallback response with readable chunks
             fallback_chunks = [
-                f"🚀 **PopupGenius Analysis for:** {user_input[:100]}...\n\n",
-                "📊 **Historical Performance Analysis**\n",
-                "• Current conversion rate: 10.4%\n",
-                "• Industry average: 16.8%\n", 
-                "• **Improvement opportunity: +62%**\n\n",
-                "💰 **Revenue Impact Analysis**\n",
-                "• Potential revenue increase: $127,000 annually\n",
-                "• ROI on optimization: 340%\n",
-                "• Payback period: 2.1 months\n\n",
-                "🌐 **Competitive Intelligence**\n",
-                "• Top competitors using urgency tactics\n",
-                "• Exit-intent popups show 2.3x better performance\n",
-                "• Discount thresholds: 20-25% optimal for $400+ items\n\n",
-                "✨ **Final Recommendations**\n",
-                "🎯 **Popup Strategy:** Exit-intent popup with urgency timer\n",
-                "💰 **Offer:** '25% OFF Your $400+ Purchase - Limited Time!'\n",
-                "⏰ **Timing:** Trigger after 45 seconds or scroll 70%\n",
-                "📱 **Design:** Mobile-first, single field email capture\n",
-                "🚀 **Expected Results:** 16.8% conversion rate (+62% improvement)"
+                f"🚀 **PopupGenius Design Analysis for:** {user_input[:100]}...\n\n",
+                "🎨 **Current Design Analysis**\n",
+                "• Layout lacks visual hierarchy\n",
+                "• CTA button needs better contrast\n", 
+                "• Missing urgency or scarcity elements\n\n",
+                "👥 **User Behavior Insights**\n",
+                "• Users respond better to single-step forms\n",
+                "• Exit-intent triggers perform better than time-based\n",
+                "• Mobile users prefer minimal text and large buttons\n\n",
+                "🌐 **Competitor Design Patterns**\n",
+                "• Bold, contrasting CTA buttons (red/orange on white)\n",
+                "• Clear value propositions in headlines\n",
+                "• Social proof elements (customer counts, reviews)\n\n",
+                "✨ **Design Recommendations**\n",
+                "🎨 **Visual Design:** Use bold colors with high contrast ratio\n",
+                "📝 **Copy:** Shorter headline with clear benefit statement\n",
+                "⏰ **Trigger:** Exit-intent with 3-second delay on mobile\n",
+                "📱 **Layout:** Single-column, mobile-first design\n",
+                "🔘 **CTA Button:** Large, rounded corners, action-oriented text\n",
+                "✨ **Add Elements:** Urgency timer or limited quantity indicator"
             ]
             
             for chunk in fallback_chunks:

@@ -67,7 +67,7 @@ Return the modified configuration as JSON."""
     try:
         # Use the responses API
         response = client.responses.create(
-            model="o4-mini",
+            model="gpt-4.1",
             input=prompt,
         )
 

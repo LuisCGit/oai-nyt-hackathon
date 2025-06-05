@@ -11,6 +11,7 @@ import sampleContent from '@/data/sample-flexible-content.json'
 
 export const PopupPreview: React.FC = () => {
   const [showOptimization, setShowOptimization] = useState(false)
+  const [popupConfig, setPopupConfig] = useState<FlexibleContent>(sampleContent as FlexibleContent)
 
   const handleOptimize = () => {
     setShowOptimization(true)
@@ -18,6 +19,11 @@ export const PopupPreview: React.FC = () => {
 
   const handleBackToPreview = () => {
     setShowOptimization(false)
+  };
+
+  const handlePopupUpdate = (newConfig: FlexibleContent) => {
+    setPopupConfig(newConfig)
+    setShowOptimization(false) // Return to preview to show the new popup
   };
 
   const handlePopupSubmit = async (data: Record<string, string>) => {
@@ -32,7 +38,7 @@ export const PopupPreview: React.FC = () => {
         {/* Mobile Frame */}
         <div className="w-80 h-[640px] bg-white rounded-2xl overflow-hidden shadow-2xl relative">
           <FlexiblePopup
-            content={sampleContent as FlexibleContent}
+            content={popupConfig}
             overrideBreakpoint={Breakpoint.MAX_SM}
             onSubmit={handlePopupSubmit}
           />
@@ -43,8 +49,9 @@ export const PopupPreview: React.FC = () => {
       <div className="flex-1 bg-gray-50 flex flex-col">
         {showOptimization ? (
           <OptimizationInterface 
-            popupConfig={sampleContent as FlexibleContent}
+            popupConfig={popupConfig}
             onBack={handleBackToPreview}
+            onPopupUpdate={handlePopupUpdate}
           />
         ) : (
           <div className="p-6 flex flex-col">
@@ -67,11 +74,11 @@ export const PopupPreview: React.FC = () => {
                 <div className="space-y-2 text-xs text-gray-500">
                   <div className="flex justify-between">
                     <span>Components:</span>
-                    <span>{Object.values(sampleContent.sections).reduce((acc, section) => acc + section.components.length, 0)}</span>
+                    <span>{Object.values(popupConfig.sections).reduce((acc, section) => acc + section.components.length, 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Layout:</span>
-                    <span>{sampleContent.layout.type}</span>
+                    <span>{popupConfig.layout.type}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>View:</span>
