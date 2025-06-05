@@ -1,1 +1,181 @@
-<!-- Popup template -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ popup_title }}</title>
+    <style>
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .popup-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            text-align: center;
+        }
+        
+        .popup-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .popup-emoji {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .popup-headline {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+        
+        .popup-subheading {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .popup-offer {
+            background: #2563eb;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .popup-urgency {
+            background: #ff4444;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+        
+        .popup-cta {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 15px 0;
+            transition: transform 0.2s;
+        }
+        
+        .popup-cta:hover {
+            transform: scale(1.05);
+        }
+        
+        .popup-social-proof {
+            font-size: 14px;
+            color: #888;
+            margin-top: 15px;
+        }
+        
+        .popup-email-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .popup-container {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            .popup-headline {
+                font-size: 24px;
+            }
+            
+            .popup-offer {
+                font-size: 20px;
+                padding: 12px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="popup-overlay">
+        <div class="popup-container">
+            <div class="popup-close">&times;</div>
+            
+            <div class="popup-emoji">{{ emoji }}</div>
+            
+            <div class="popup-headline">{{ headline }}</div>
+            
+            <div class="popup-subheading">{{ subheading }}</div>
+            
+            <div class="popup-offer">{{ offer_text }}</div>
+            
+            {% if urgency_text %}
+            <div class="popup-urgency">{{ urgency_text }}</div>
+            {% endif %}
+            
+            <input type="email" class="popup-email-input" placeholder="Enter your email address">
+            
+            <button class="popup-cta">{{ cta_text }}</button>
+            
+            {% if social_proof %}
+            <div class="popup-social-proof">{{ social_proof }}</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        // Auto-close functionality
+        document.querySelector('.popup-close').onclick = function() {
+            document.querySelector('.popup-overlay').style.display = 'none';
+        };
+        
+        // Click outside to close
+        document.querySelector('.popup-overlay').onclick = function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        };
+        
+        // CTA button functionality
+        document.querySelector('.popup-cta').onclick = function() {
+            const email = document.querySelector('.popup-email-input').value;
+            if (email) {
+                alert('Thank you! Offer claimed successfully.');
+                document.querySelector('.popup-overlay').style.display = 'none';
+            } else {
+                alert('Please enter your email address.');
+            }
+        };
+    </script>
+</body>
+</html>

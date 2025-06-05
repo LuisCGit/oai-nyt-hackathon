@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PopupGenius - Frontend Integration Example</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 120px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-section {
+            margin: 30px 0;
+            display: none;
+        }
+        
+        .progress-section.active {
+            display: block;
+        }
+        
+        .tool-progress {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+        }
+        
+        .tool-progress.running {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            animation: pulse 2s infinite;
+        }
+        
+        .tool-progress.completed {
+            background: #e8f5e8;
+            border-left-color: #4caf50;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .response-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .response-text {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .event-log {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 PopupGenius - Structured Streaming Demo</h1>
+        
+        <div class="input-section">
+            <label for="businessDescription">Describe your business and popup optimization goals:</label>
+            <textarea id="businessDescription" placeholder="e.g., I run a baseball equipment store called ProVelocity selling $495 training bats. Want to improve popup conversion rates.">I run a baseball equipment store called ProVelocity selling $495 training bats. Want to improve popup conversion rates.</textarea>
+            <button onclick="startAnalysis()" id="analyzeBtn">🔥 Start PopupGenius Analysis</button>
+        </div>
+        
+        <div class="progress-section" id="progressSection">
+            <h3>Analysis Progress</h3>
+            <div id="toolProgress"></div>
+        </div>
+        
+        <div class="response-section">
+            <div class="response-text" id="responseText">Results will appear here...</div>
+        </div>
+        
+        <details>
+            <summary>🔧 Event Log (for developers)</summary>
+            <div class="event-log" id="eventLog"></div>
+        </details>
+    </div>
+
+    <script>
+        let ws = null;
+        let responseText = '';
+        
+        function addStatus(message, type = 'info') {
+            const progressSection = document.getElementById('progressSection');
+            const status = document.createElement('div');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            progressSection.appendChild(status);
+            progressSection.classList.add('active');
+        }
+        
+        function addToolProgress(toolName, description, status = 'running') {
+            const toolProgress = document.getElementById('toolProgress');
+            const existingTool = document.getElementById(`tool-${toolName}`);
+            
+            if (existingTool) {
+                existingTool.className = `tool-progress ${status}`;
+                if (status === 'completed') {
+                    existingTool.innerHTML += ' ✅';
+                }
+            } else {
+                const toolDiv = document.createElement('div');
+                toolDiv.id = `tool-${toolName}`;
+                toolDiv.className = `tool-progress ${status}`;
+                toolDiv.innerHTML = `${description} ${status === 'running' ? '🔄' : ''}`;
+                toolProgress.appendChild(toolDiv);
+            }
+        }
+        
+        function logEvent(event) {
+            const eventLog = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            eventLog.innerHTML += `[${timestamp}] ${event.type}: ${JSON.stringify(event, null, 2)}\n\n`;
+            eventLog.scrollTop = eventLog.scrollHeight;
+        }
+        
+        function startAnalysis() {
+            const businessDescription = document.getElementById('businessDescription').value;
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const responseTextEl = document.getElementById('responseText');
+            const progressSection = document.getElementById('progressSection');
+            const toolProgress = document.getElementById('toolProgress');
+            const eventLog = document.getElementById('eventLog');
+            
+            if (!businessDescription.trim()) {
+                alert('Please enter a business description');
+                return;
+            }
+            
+            // Reset UI
+            analyzeBtn.disabled = true;
+            responseText = '';
+            responseTextEl.textContent = 'Starting analysis...';
+            progressSection.classList.add('active');
+            toolProgress.innerHTML = '';
+            eventLog.innerHTML = '';
+            
+            // Connect to WebSocket
+            ws = new WebSocket('ws://localhost:8000/ws/popup-optimization');
+            
+            ws.onopen = function() {
+                console.log('Connected to PopupGenius');
+                ws.send(JSON.stringify({
+                    business_description: businessDescription,
+                    optimization_goals: "Increase conversion rates and revenue"
+                }));
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    logEvent(data);
+                    
+                    switch(data.type) {
+                        case 'analysis_start':
+                            addStatus(data.message, 'info');
+                            break;
+                            
+                        case 'tool_start':
+                            addToolProgress(data.tool_name, data.tool_description, 'running');
+                            addStatus(`Starting: ${data.tool_description}`, 'info');
+                            break;
+                            
+                        case 'tool_complete':
+                            addToolProgress(data.tool_name, '', 'completed');
+                            addStatus(`Tool completed with insights`, 'success');
+                            break;
+                            
+                        case 'text_chunk':
+                            responseText += data.content;
+                            responseTextEl.textContent = responseText;
+                            break;
+                            
+                        case 'text_delta':
+                            responseText += data.content;
+                            responseTextEl.textContent = responseText;
+                            break;
+                            
+                        case 'message_complete':
+                            responseText = data.content;
+                            responseTextEl.textContent = responseText;
+                            break;
+                            
+                        case 'error':
+                            addStatus(`Error: ${data.message}`, 'error');
+                            analyzeBtn.disabled = false;
+                            break;
+                            
+                        default:
+                            console.log('Unknown event type:', data.type);
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e, event.data);
+                }
+            };
+            
+            ws.onclose = function() {
+                console.log('Disconnected from PopupGenius');
+                analyzeBtn.disabled = false;
+                addStatus('Analysis completed! 🎉', 'success');
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                addStatus('Connection error - make sure the backend is running on localhost:8000', 'error');
+                analyzeBtn.disabled = false;
+            };
+        }
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (ws) {
+                ws.close();
+            }
+        });
+    </script>
+</body>
+</html> 
