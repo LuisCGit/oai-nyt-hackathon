@@ -36,7 +36,7 @@ class PopupOptimizationAgent:
     def __init__(self):
         self.agent = Agent(
             name="PopupGenius",
-            model="gpt-4o",
+            model="gpt-4.1",
             instructions="""You are PopupGenius, an AI optimization expert specializing in e-commerce popup optimization.
 
                 Your mission is to transform popup performance through real-time data analysis and competitive intelligence. You deliver instant, actionable optimization strategies that can increase conversion rates by 40-300%.

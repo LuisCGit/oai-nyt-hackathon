@@ -139,17 +139,115 @@ export function InteractiveResponse({ content, onHighlight, onCopy }: Interactiv
     }
   }
 
+  // Enhanced markdown-style rendering
+  const renderMarkdownContent = (text: string) => {
+    return text.split('\n').map((line, index) => {
+      // Headers
+      if (line.startsWith('### ')) {
+        return (
+          <h3 key={index} className="text-lg font-semibold text-gray-900 mt-4 mb-2 first:mt-0">
+            {line.replace('### ', '')}
+          </h3>
+        )
+      }
+      if (line.startsWith('## ')) {
+        return (
+          <h2 key={index} className="text-xl font-bold text-gray-900 mt-6 mb-3 first:mt-0">
+            {line.replace('## ', '')}
+          </h2>
+        )
+      }
+      if (line.startsWith('# ')) {
+        return (
+          <h1 key={index} className="text-2xl font-bold text-gray-900 mt-6 mb-4 first:mt-0">
+            {line.replace('# ', '')}
+          </h1>
+        )
+      }
+      
+      // Bold text
+      if (line.includes('**')) {
+        const parts = line.split(/(\*\*[^*]+\*\*)/)
+        return (
+          <p key={index} className="mb-2 leading-relaxed hover:bg-gray-50 transition-colors duration-200 rounded p-1">
+            {parts.map((part, partIndex) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                return (
+                  <strong key={partIndex} className="font-semibold text-gray-900">
+                    {part.slice(2, -2)}
+                  </strong>
+                )
+              }
+              return part
+            })}
+          </p>
+        )
+      }
+      
+      // Bullet points
+      if (line.trim().startsWith('- ') || line.trim().startsWith('• ')) {
+        return (
+          <div key={index} className="flex items-start space-x-2 mb-1 ml-4">
+            <span className="text-blue-500 font-bold mt-1">•</span>
+            <span className="leading-relaxed">{line.trim().replace(/^[-•]\s*/, '')}</span>
+          </div>
+        )
+      }
+      
+      // Numbered lists
+      if (line.trim().match(/^\d+\.\s/)) {
+        return (
+          <div key={index} className="flex items-start space-x-2 mb-1 ml-4">
+            <span className="text-blue-500 font-semibold mt-1">{line.trim().match(/^\d+/)?.[0]}.</span>
+            <span className="leading-relaxed">{line.trim().replace(/^\d+\.\s*/, '')}</span>
+          </div>
+        )
+      }
+      
+      // Emojis and special formatting
+      if (line.includes('🔄') || line.includes('📊') || line.includes('💰') || line.includes('🎯')) {
+        return (
+          <div key={index} className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-2 rounded-r">
+            <p className="text-gray-800 leading-relaxed">{line}</p>
+          </div>
+        )
+      }
+      
+      // Money/percentage highlights
+      const highlightedLine = line
+        .replace(/(\$[\d,]+(?:\.\d{2})?)/g, '<span class="bg-green-100 text-green-800 px-1 py-0.5 rounded font-medium">$1</span>')
+        .replace(/(\d+(?:\.\d+)?%)/g, '<span class="bg-blue-100 text-blue-800 px-1 py-0.5 rounded font-medium">$1</span>')
+      
+      if (highlightedLine !== line) {
+        return (
+          <p 
+            key={index} 
+            className="mb-2 leading-relaxed hover:bg-gray-50 transition-colors duration-200 rounded p-1"
+            dangerouslySetInnerHTML={{ __html: highlightedLine }}
+          />
+        )
+      }
+      
+      // Regular paragraphs
+      if (line.trim() === '') {
+        return <div key={index} className="h-2" />
+      }
+      
+      return (
+        <p key={index} className="mb-2 leading-relaxed hover:bg-gray-50 transition-colors duration-200 rounded p-1 text-gray-700">
+          {line}
+        </p>
+      )
+    })
+  }
+
   return (
     <div className="relative">
       <div 
-        className="prose prose-sm max-w-none text-gray-900 cursor-text select-text"
+        className="prose prose-sm max-w-none cursor-text select-text"
         onMouseUp={handleTextSelection}
       >
-        {content.split('\n').map((line, index) => (
-          <p key={index} className="mb-2 leading-relaxed hover:bg-gray-50 transition-colors duration-200 rounded p-1">
-            {line}
-          </p>
-        ))}
+        {renderMarkdownContent(content)}
       </div>
       
       {/* Selection Tooltip */}

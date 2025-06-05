@@ -48,27 +48,28 @@ const MessageItem = ({ message, onHighlight, onCopy }: {
   }
   
   if (message.type === 'agent_response') {
-    const metrics = extractMetricsFromText(message.content)
-    const comparisons = extractBeforeAfterFromText(message.content)
+    // Only extract metrics if the content is substantial enough
+    const metrics = message.content.length > 100 ? extractMetricsFromText(message.content) : []
+    const comparisons = message.content.length > 100 ? extractBeforeAfterFromText(message.content) : []
     
     return (
       <div className="py-4 space-y-4">
-        {/* Metrics Cards */}
+        {/* Only show metrics if we found real ones */}
         {metrics.length > 0 && (
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-gray-900 mb-3">Key Metrics</h4>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">📊 Key Insights</h4>
             <MetricsHighlight metrics={metrics} />
           </div>
         )}
         
-        {/* Before/After Comparisons */}
+        {/* Only show comparisons if we found real ones */}
         {comparisons.length > 0 && (
           <div className="mb-4">
-            <BeforeAfterComparison comparisons={comparisons} />
+            <BeforeAfterComparison comparisons={comparisons} title="🔄 Performance Improvements" />
           </div>
         )}
         
-        {/* Interactive Response Content */}
+        {/* Main Response Content with Enhanced Markdown */}
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <InteractiveResponse 
             content={message.content.replace(/\\n/g, '\n')}

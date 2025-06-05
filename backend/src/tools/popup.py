@@ -16,7 +16,7 @@ def analyze_popup_history(business_description: str = ""):
     
     # Load actual mock data
     try:
-        with open('/Users/andrewsiah/Documents/oai-nyt-hackathon/backend/data/mock_popup_data.json', 'r') as f:
+        with open('data/mock_popup_data.json', 'r') as f:
             data = json.load(f)
             popup_data = data['response']
     except:

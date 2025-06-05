@@ -142,59 +142,78 @@ export function BeforeAfterComparison({ comparisons, title = "Performance Compar
   )
 }
 
-// Utility function to extract before/after data from text
+// Utility function to extract REAL before/after data from AI text responses
 export function extractBeforeAfterFromText(text: string): ComparisonData[] {
   const comparisons: ComparisonData[] = []
   
-  // Look for before/after patterns
-  const beforeAfterPattern = /before[:\s]*([^,\n]+).*?after[:\s]*([^,\n]+)/gi
-  const conversionPattern = /conversion.*?(\d+(?:\.\d+)?%).*?(\d+(?:\.\d+)?%)/gi
-  const revenuePattern = /revenue.*?\$(\d+(?:,\d{3})*(?:\.\d{2})?).*?\$(\d+(?:,\d{3})*(?:\.\d{2})?)/gi
+  // Only look for explicit before/after patterns mentioned by the AI
+  // More specific patterns that indicate actual comparisons
   
+  // Direct before/after statements
+  const explicitBeforeAfter = /(?:from|before)[:\s]*([^\n→]+?)(?:\s*→\s*|\s+to\s+|\s+after[:\s]*|\s+becomes?\s+)([^\n,]+)/gi
   let match
   
-  // Extract before/after patterns
-  while ((match = beforeAfterPattern.exec(text)) !== null) {
-    comparisons.push({
-      label: 'General Improvement',
-      before: match[1].trim(),
-      after: match[2].trim()
-    })
-  }
-  
-  // Extract conversion rate improvements
-  while ((match = conversionPattern.exec(text)) !== null) {
-    const before = match[1]
-    const after = match[2]
-    const beforeNum = parseFloat(before.replace('%', ''))
-    const afterNum = parseFloat(after.replace('%', ''))
-    const improvement = afterNum > beforeNum ? `+${(afterNum - beforeNum).toFixed(1)}%` : `${(afterNum - beforeNum).toFixed(1)}%`
+  while ((match = explicitBeforeAfter.exec(text)) !== null) {
+    const before = match[1].trim()
+    const after = match[2].trim()
     
-    comparisons.push({
-      label: 'Conversion Rate',
-      before,
-      after,
-      improvement,
-      format: 'percentage'
-    })
+    // Skip if values are too generic or short
+    if (before.length > 3 && after.length > 3 && before !== after) {
+      // Determine format based on content
+      let format: 'currency' | 'percentage' | 'number' | undefined = undefined
+      let improvement: string | undefined = undefined
+      
+      if (before.includes('%') && after.includes('%')) {
+        format = 'percentage'
+        const beforeNum = parseFloat(before.replace(/[^\d.]/g, ''))
+        const afterNum = parseFloat(after.replace(/[^\d.]/g, ''))
+        if (!isNaN(beforeNum) && !isNaN(afterNum)) {
+          improvement = afterNum > beforeNum ? `+${(afterNum - beforeNum).toFixed(1)}%` : `${(afterNum - beforeNum).toFixed(1)}%`
+        }
+      } else if (before.includes('$') && after.includes('$')) {
+        format = 'currency'
+      }
+      
+      comparisons.push({
+        label: 'Performance Change',
+        before,
+        after,
+        improvement,
+        format
+      })
+    }
   }
   
-  // Extract revenue improvements
-  while ((match = revenuePattern.exec(text)) !== null) {
-    const before = match[1]
-    const after = match[2]
-    const beforeNum = parseFloat(before.replace(/,/g, ''))
-    const afterNum = parseFloat(after.replace(/,/g, ''))
-    const improvement = afterNum > beforeNum ? `+$${(afterNum - beforeNum).toLocaleString()}` : `-$${(beforeNum - afterNum).toLocaleString()}`
+  // Improvement arrows (→) pattern
+  const arrowPattern = /([^→\n]+)\s*→\s*([^→\n]+)/gi
+  while ((match = arrowPattern.exec(text)) !== null) {
+    const before = match[1].trim()
+    const after = match[2].trim()
     
-    comparisons.push({
-      label: 'Revenue',
-      before,
-      after,
-      improvement,
-      format: 'currency'
-    })
+    // Only include if it looks like a meaningful comparison
+    if (before.length > 3 && after.length > 3 && 
+        (before.includes('%') || before.includes('$') || after.includes('%') || after.includes('$'))) {
+      
+      let format: 'currency' | 'percentage' | 'number' | undefined = undefined
+      if (before.includes('%') || after.includes('%')) format = 'percentage'
+      else if (before.includes('$') || after.includes('$')) format = 'currency'
+      
+      comparisons.push({
+        label: 'Optimization Result',
+        before,
+        after,
+        format
+      })
+    }
   }
   
-  return comparisons.slice(0, 4) // Limit to 4 comparisons for clean display
+  // Remove duplicates based on similar before/after values
+  const uniqueComparisons = comparisons.filter((comp, index, self) => 
+    index === self.findIndex(c => 
+      c.before.toLowerCase() === comp.before.toLowerCase() || 
+      c.after.toLowerCase() === comp.after.toLowerCase()
+    )
+  )
+  
+  return uniqueComparisons.slice(0, 3) // Limit to 3 comparisons for clean display
 }

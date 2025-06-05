@@ -21,7 +21,7 @@ def analyze_transaction_data(business_description: str = ""):
     try:
         if pd is None:
             raise ImportError("pandas not available")
-        df = pd.read_csv('/Users/andrewsiah/Documents/oai-nyt-hackathon/backend/data/mock_transaction_data.csv')
+        df = pd.read_csv('data/mock_transaction_data.csv')
     except Exception as e:
         # Fallback mock data if pandas/file not available
         # Generate business-specific insights even in fallback mode

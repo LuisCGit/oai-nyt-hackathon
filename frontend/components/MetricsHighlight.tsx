@@ -84,64 +84,73 @@ export function MetricsHighlight({ metrics, animated = true }: MetricsHighlightP
   )
 }
 
-// Utility function to extract and highlight metrics from text
+// Utility function to extract REAL metrics from AI text responses
 export function extractMetricsFromText(text: string): MetricData[] {
   const metrics: MetricData[] = []
   
-  // Revenue patterns
-  const revenuePatterns = [
-    /\$[\d,]+(?:\.\d{2})?/g,
-    /revenue.*?\$[\d,]+/gi,
-    /sales.*?\$[\d,]+/gi
-  ]
+  // Only extract metrics that are explicitly mentioned by the AI with context
+  // Look for structured metric mentions with clear labels
   
-  // Percentage patterns  
-  const percentagePatterns = [
-    /\d+(?:\.\d+)?%/g,
-    /conversion.*?(\d+(?:\.\d+)?%)/gi,
-    /rate.*?(\d+(?:\.\d+)?%)/gi
-  ]
-  
-  // Extract revenue metrics
-  revenuePatterns.forEach(pattern => {
-    const matches = text.match(pattern)
-    if (matches) {
-      matches.forEach(match => {
-        metrics.push({
-          label: 'Revenue Impact',
-          value: match.replace(/[^\d$.,]/g, ''),
-          format: 'currency',
-          icon: (
-            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-            </svg>
-          )
-        })
+  // Revenue with clear context (avoid standalone dollar amounts)
+  const revenueContextPattern = /(?:revenue|sales|income).*?(\$[\d,]+(?:\.\d{2})?)|(\$[\d,]+(?:\.\d{2})?).*?(?:revenue|sales|income|increase|potential)/gi
+  let match
+  while ((match = revenueContextPattern.exec(text)) !== null) {
+    const amount = match[1] || match[2]
+    if (amount) {
+      metrics.push({
+        label: 'Revenue Opportunity',
+        value: amount,
+        format: 'currency',
+        icon: (
+          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+          </svg>
+        )
       })
     }
-  })
+  }
   
-  // Extract percentage metrics
-  percentagePatterns.forEach(pattern => {
-    const matches = text.match(pattern)
-    if (matches) {
-      matches.forEach(match => {
-        const percentValue = match.match(/\d+(?:\.\d+)?%/)?.[0]
-        if (percentValue) {
-          metrics.push({
-            label: 'Conversion Rate',
-            value: percentValue,
-            format: 'percentage',
-            icon: (
-              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H9a2 2 0 01-2-2z" />
-              </svg>
-            )
-          })
-        }
+  // Conversion rates with clear context
+  const conversionPattern = /(?:conversion|rate).*?(\d+(?:\.\d+)?%)|(\d+(?:\.\d+)?%).*?(?:conversion|rate)/gi
+  while ((match = conversionPattern.exec(text)) !== null) {
+    const percentage = match[1] || match[2]
+    if (percentage) {
+      metrics.push({
+        label: 'Conversion Rate',
+        value: percentage,
+        format: 'percentage',
+        icon: (
+          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H9a2 2 0 01-2-2z" />
+          </svg>
+        )
       })
     }
-  })
+  }
   
-  return metrics.slice(0, 6) // Limit to 6 metrics for clean display
+  // Improvement percentages with context
+  const improvementPattern = /(?:improve|increase|boost|gain).*?(\d+(?:\.\d+)?%)|(\d+(?:\.\d+)?%).*?(?:improve|increase|boost|gain)/gi
+  while ((match = improvementPattern.exec(text)) !== null) {
+    const percentage = match[1] || match[2]
+    if (percentage) {
+      metrics.push({
+        label: 'Improvement Potential',
+        value: percentage,
+        changeType: 'positive',
+        format: 'percentage',
+        icon: (
+          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        )
+      })
+    }
+  }
+  
+  // Remove duplicates and limit results
+  const uniqueMetrics = metrics.filter((metric, index, self) => 
+    index === self.findIndex(m => m.value === metric.value && m.label === metric.label)
+  )
+  
+  return uniqueMetrics.slice(0, 4) // Limit to 4 metrics for clean display
 }
