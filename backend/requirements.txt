@@ -1,0 +1,10 @@
+openai
+openai-agents
+fastapi
+uvicorn[standard]
+playwright
+beautifulsoup4
+pandas
+numpy
+jinja2
+python-dotenv

@@ -129,12 +129,25 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Frontend dependencies and build
+node_modules/
+.next/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Spyder project settings
 .spyderproject
@@ -192,3 +205,11 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+test_utils.py
+
+.env.example
+.claude
+
+# exclude python env 
+backend/oai-nyt-hackathon
