@@ -1,0 +1,281 @@
+{
+  "layout": {
+    "type": "stacked",
+    "slot_mapping": {},
+    "custom_properties": {
+      "split_ratio": null,
+      "popup_config": {
+        "overlay": {
+          "box_shadow": "0 0 10px 0 rgba(0,0,0,0.3)",
+          "border_radius": "8px",
+          "backdrop_filter": "blur(3px)",
+          "background_color": "rgba(0,0,0,0.6)"
+        },
+        "gradient": {
+          "type": "linear",
+          "stops": [
+            {
+              "color": "rgba(0, 0, 0, 0.8)",
+              "position": 0
+            },
+            {
+              "color": "rgba(34, 34, 34, 0.8)",
+              "position": 100
+            }
+          ],
+          "direction": "to bottom"
+        },
+        "responsive": {
+          "max-lg": {
+            "width": "100%",
+            "height": "100dvh"
+          },
+          "max-md": {
+            "width": "100%",
+            "height": "100dvh"
+          },
+          "max-sm": {
+            "width": "100%",
+            "height": "100dvh"
+          },
+          "max-xl": {
+            "width": "100%",
+            "height": "100dvh"
+          },
+          "default": {
+            "width": "100%",
+            "height": "100dvh"
+          },
+          "max-2xl": {
+            "width": "100%",
+            "height": "100dvh"
+          }
+        },
+        "close_button": {
+          "size": "24px",
+          "color": "#ffffff",
+          "delay": 1000,
+          "opacity": 0.6,
+          "position": "right"
+        }
+      },
+      "mobile_stack_direction": null
+    }
+  },
+  "metadata": {},
+  "sections": {
+    "form_section": {
+      "id": "form_section",
+      "name": "Form Section",
+      "layout": "vertical",
+      "styles": {
+        "max-lg": {},
+        "max-md": {},
+        "max-sm": {
+          "width": "90%"
+        },
+        "max-xl": {},
+        "default": {
+          "width": "60%",
+          "height": "100%",
+          "display": "flex",
+          "padding": "20px",
+          "alignItems": "center",
+          "paddingTop": "35px",
+          "flexDirection": "column",
+          "justifyContent": "center"
+        },
+        "max-2xl": {}
+      },
+      "components": [
+        {
+          "id": "logo",
+          "type": "image",
+          "styles": {
+            "max-lg": {
+              "width": "120px",
+              "height": "auto",
+              "objectFit": "contain",
+              "paddingTop": "5px"
+            },
+            "max-md": {
+              "width": "110px",
+              "height": "auto",
+              "objectFit": "contain",
+              "paddingTop": "5px"
+            },
+            "max-sm": {
+              "width": "100px",
+              "height": "auto",
+              "objectFit": "contain",
+              "paddingTop": "0px"
+            },
+            "max-xl": {
+              "width": "130px",
+              "height": "auto",
+              "objectFit": "contain",
+              "paddingTop": "5px"
+            },
+            "default": {
+              "width": "130px",
+              "height": "auto",
+              "objectFit": "contain",
+              "paddingTop": "5px"
+            },
+            "max-2xl": {
+              "width": "130px",
+              "height": "auto",
+              "objectFit": "contain",
+              "paddingTop": "5px"
+            }
+          },
+          "visible": true,
+          "properties": {
+            "alt": "highabove-logo",
+            "src": "https://cdn.shopify.com/s/files/1/0596/6977/4402/files/tmpg0yfskf9_logo.png?v=1744057418"
+          }
+        },
+        {
+          "id": "heading-1",
+          "type": "text",
+          "styles": {
+            "max-lg": {},
+            "max-md": {},
+            "max-sm": {
+              "fontSize": "28px",
+              "paddingTop": "28px"
+            },
+            "max-xl": {},
+            "default": {
+              "color": "#FFFFFF",
+              "fontSize": "35px",
+              "textAlign": "center",
+              "fontWeight": "600",
+              "lineHeight": "1.1",
+              "paddingTop": "35px"
+            },
+            "max-2xl": {}
+          },
+          "visible": true,
+          "properties": {
+            "content": "You've got"
+          }
+        },
+        {
+          "id": "heading-2",
+          "type": "text",
+          "styles": {
+            "max-lg": {},
+            "max-md": {},
+            "max-sm": {
+              "fontSize": "48px"
+            },
+            "max-xl": {},
+            "default": {
+              "color": "#FFFFFF",
+              "fontSize": "60px",
+              "textAlign": "center",
+              "fontWeight": "700",
+              "lineHeight": "1.1",
+              "paddingTop": "5px"
+            },
+            "max-2xl": {}
+          },
+          "visible": true,
+          "properties": {
+            "content": "Free Shipping"
+          }
+        },
+        {
+          "id": "email_input",
+          "type": "input",
+          "styles": {
+            "max-lg": {
+              "width": "65%"
+            },
+            "max-md": {},
+            "max-sm": {},
+            "max-xl": {
+              "width": "65%"
+            },
+            "default": {
+              "color": "#000000",
+              "width": "90%",
+              "border": "1px solid #FFFFFF",
+              "padding": "14px",
+              "marginTop": "35px",
+              "borderRadius": "26px",
+              "backgroundColor": "#FFFFFF"
+            },
+            "max-2xl": {
+              "width": "65%"
+            }
+          },
+          "visible": true,
+          "properties": {
+            "required": true,
+            "input_type": "email",
+            "placeholder": "What's your email?"
+          }
+        },
+        {
+          "id": "submit_button",
+          "type": "button",
+          "styles": {
+            "max-lg": {
+              "width": "65%"
+            },
+            "max-md": {},
+            "max-sm": {},
+            "max-xl": {
+              "width": "65%"
+            },
+            "default": {
+              "color": "#FFFFFF",
+              "width": "90%",
+              "cursor": "pointer",
+              "padding": "14px",
+              "boxShadow": "0 2px 4px rgba(0,0,0,0.2)",
+              "marginTop": "10px",
+              "borderRadius": "26px",
+              "backgroundColor": "#FF671B"
+            },
+            "max-2xl": {
+              "width": "65%"
+            }
+          },
+          "visible": true,
+          "properties": {
+            "action": "submit",
+            "content": "Get Free Shipping"
+          }
+        },
+        {
+          "id": "secondary_text",
+          "type": "text",
+          "styles": {
+            "max-lg": {},
+            "max-md": {},
+            "max-sm": {},
+            "max-xl": {},
+            "default": {
+              "color": "#FFFFFF",
+              "cursor": "pointer",
+              "fontSize": "16px",
+              "marginTop": "24px",
+              "textAlign": "center",
+              "lineHeight": "1.1",
+              "marginBottom": "120px"
+            },
+            "max-2xl": {}
+          },
+          "visible": true,
+          "properties": {
+            "action": "close",
+            "content": "No, I want to pay full price"
+          }
+        }
+      ]
+    }
+  }
+}
