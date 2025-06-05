@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { categorizeError } from '@/components/ErrorRecovery'
 
 export interface OptimizationEvent {
   type: string
@@ -14,34 +15,98 @@ export interface StreamMessage {
   isComplete?: boolean
 }
 
+interface ErrorInfo {
+  message: string
+  type: 'network' | 'server' | 'timeout' | 'unknown'
+  timestamp: Date
+  retryCount: number
+}
+
+interface ConnectionState {
+  isConnected: boolean
+  isConnecting: boolean
+  lastConnected?: Date
+  retryCount: number
+}
+
 export function useOptimizationStream() {
   const [messages, setMessages] = useState<StreamMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<ErrorInfo | null>(null)
+  const [connectionState, setConnectionState] = useState<ConnectionState>({
+    isConnected: false,
+    isConnecting: false,
+    retryCount: 0
+  })
+  
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastPopupConfigRef = useRef<any>(null)
+  
+  const maxRetries = 3
+  const baseRetryDelay = 1000
 
-  const startOptimization = useCallback(async (popupConfig: any) => {
-    setMessages([])
-    setIsStreaming(true)
-    setError(null)
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+    }
+  }, [])
 
+  const attemptConnection = useCallback(async (popupConfig: any, isRetry = false): Promise<boolean> => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    
+    abortControllerRef.current = new AbortController()
+    lastPopupConfigRef.current = popupConfig
+    
+    setConnectionState(prev => ({ 
+      ...prev, 
+      isConnecting: true,
+      retryCount: isRetry ? prev.retryCount + 1 : 0
+    }))
+    
     try {
-      const response = await fetch('http://localhost:8000/optimize', {
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 30000) // 30s timeout
+      })
+      
+      const fetchPromise = fetch('http://localhost:8000/popup-optimization-structured', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ popup_config: popupConfig }),
+        body: JSON.stringify({ 
+          business_description: `E-commerce store with popup configuration: ${JSON.stringify(popupConfig)}`,
+          optimization_goals: "Optimize popup conversion rates and user engagement"
+        }),
+        signal: abortControllerRef.current.signal
       })
 
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as Response
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`Server error: ${response.status} ${response.statusText}`)
       }
+
+      setConnectionState(prev => ({ 
+        ...prev, 
+        isConnected: true, 
+        isConnecting: false,
+        lastConnected: new Date()
+      }))
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
 
       if (!reader) {
-        throw new Error('No response body')
+        throw new Error('No response body available')
       }
 
       let buffer = ''
@@ -68,128 +133,157 @@ export function useOptimizationStream() {
           }
         }
       }
+      
+      setConnectionState(prev => ({ 
+        ...prev, 
+        isConnected: false 
+      }))
+      
+      return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
+      console.error('Connection error:', err)
+      
+      if (err instanceof Error && err.name === 'AbortError') {
+        return false // Don't retry if aborted
+      }
+      
+      const errorInfo = categorizeError(err instanceof Error ? err : 'Unknown error')
+      errorInfo.retryCount = connectionState.retryCount || 0
+      
+      setError(errorInfo)
+      setConnectionState(prev => ({ 
+        ...prev, 
+        isConnected: false, 
+        isConnecting: false 
+      }))
+      
+      // Auto-retry logic
+      if (connectionState.retryCount < maxRetries) {
+        const delay = baseRetryDelay * Math.pow(2, connectionState.retryCount) // Exponential backoff
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          attemptConnection(popupConfig, true)
+        }, delay)
+      }
+      
+      return false
+    }
+  }, [connectionState.retryCount])
+
+  const startOptimization = useCallback(async (popupConfig: any) => {
+    setMessages([])
+    setIsStreaming(true)
+    setError(null)
+
+    const success = await attemptConnection(popupConfig)
+    
+    if (!success && connectionState.retryCount >= maxRetries) {
       setIsStreaming(false)
+    } else if (success) {
+      setIsStreaming(false)
+    }
+  }, [attemptConnection, connectionState.retryCount])
+
+  const retryConnection = useCallback(() => {
+    if (lastPopupConfigRef.current) {
+      setError(null)
+      setConnectionState(prev => ({ ...prev, retryCount: 0 }))
+      startOptimization(lastPopupConfigRef.current)
     }
   }, [])
 
   const handleStreamEvent = useCallback((event: any) => {
-    const messageId = Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    const messageId = Date.now().toString() + Math.random().toString(36).substring(2, 9)
     
-    // Add debug logging
     console.log('Received event:', event)
     
-    // Handle tool calls - look for function call events in raw_response_event
-    if (event.type === 'raw_response_event' && typeof event.data === 'string') {
-      console.log('Processing raw_response_event:', event.data)
-      
-      // Try to parse the stringified event data
-      try {
-        // Check if it's a function call event
-        if (event.data.includes('ResponseOutputItemAddedEvent') && event.data.includes('function_call')) {
-          console.log('Found function call event')
-          // Extract function name from the event data string
-          const fetchProductMatch = event.data.match(/fetch_product_data/)
-          const fetchPopupMatch = event.data.match(/fetch_popup_data/)
-          
-          if (fetchProductMatch) {
-            console.log('Adding fetch_product_data message')
-            setMessages(prev => [...prev, {
-              id: messageId,
-              type: 'tool_start',
-              content: 'Fetching product data...',
-              timestamp: new Date(),
-              isComplete: false
-            }])
-          } else if (fetchPopupMatch) {
-            console.log('Adding fetch_popup_data message')
-            setMessages(prev => [...prev, {
-              id: messageId,
-              type: 'tool_start', 
-              content: 'Fetching popup data...',
-              timestamp: new Date(),
-              isComplete: false
-            }])
+    // Handle structured events from the backend
+    if (event.type === 'tool_start') {
+      setMessages(prev => [...prev, {
+        id: messageId,
+        type: 'tool_start',
+        content: `${event.tool_description || event.tool_name}`,
+        timestamp: new Date(),
+        isComplete: false
+      }])
+    }
+    else if (event.type === 'tool_complete') {
+      setMessages(prev => {
+        const updated = [...prev]
+        const lastToolIndex = updated.map(m => m.type).lastIndexOf('tool_start')
+        if (lastToolIndex !== -1 && !updated[lastToolIndex].isComplete) {
+          updated[lastToolIndex] = {
+            ...updated[lastToolIndex],
+            content: updated[lastToolIndex].content.replace('...', ' ✓'),
+            isComplete: true
           }
         }
-        // Check for function completion
-        else if (event.data.includes('ResponseOutputItemDoneEvent') && event.data.includes('function_call')) {
-          console.log('Found function completion event')
-          setMessages(prev => {
-            const updated = [...prev]
-            const lastToolIndex = updated.map(m => m.type).lastIndexOf('tool_start')
-            if (lastToolIndex !== -1 && !updated[lastToolIndex].isComplete) {
-              const originalContent = updated[lastToolIndex].content
-              let completionMessage = ''
-              
-              if (originalContent.includes('product data')) {
-                completionMessage = 'Product data analyzed'
-              } else if (originalContent.includes('popup data')) {
-                completionMessage = 'Popup data analyzed'
-              } else {
-                completionMessage = originalContent.replace('...', ' completed')
-              }
-              
-              updated[lastToolIndex] = {
-                ...updated[lastToolIndex],
-                content: completionMessage,
-                isComplete: true
-              }
-            }
-            return updated
+        return updated
+      })
+    }
+    else if (event.type === 'text_chunk') {
+      setMessages(prev => {
+        const updated = [...prev]
+        const lastMessage = updated[updated.length - 1]
+        
+        if (lastMessage && lastMessage.type === 'agent_response') {
+          // Append to existing response
+          updated[updated.length - 1] = {
+            ...lastMessage,
+            content: lastMessage.content + event.content
+          }
+        } else {
+          // Create new response message
+          updated.push({
+            id: messageId,
+            type: 'agent_response',
+            content: event.content,
+            timestamp: new Date()
           })
         }
-        // Check for text deltas
-        else if (event.data.includes('ResponseTextDeltaEvent')) {
-          // Extract delta from the event data string
-          const deltaMatch = event.data.match(/delta='([^']*)'/) || event.data.match(/delta="([^"]*)"/)
-          if (deltaMatch) {
-            const delta = deltaMatch[1]
-            console.log('Found text delta:', delta)
-            
-            setMessages(prev => {
-              const updated = [...prev]
-              const lastMessage = updated[updated.length - 1]
-              
-              if (lastMessage && lastMessage.type === 'agent_response') {
-                // Append to existing response
-                updated[updated.length - 1] = {
-                  ...lastMessage,
-                  content: lastMessage.content + delta
-                }
-              } else {
-                // Create new response message
-                updated.push({
-                  id: messageId,
-                  type: 'agent_response',
-                  content: delta,
-                  timestamp: new Date()
-                })
-              }
-              
-              return updated
-            })
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing event data:', e)
-      }
+        
+        return updated
+      })
+    }
+    else if (event.type === 'analysis_start') {
+      // Optional: Add a start message
+      setMessages(prev => [...prev, {
+        id: messageId,
+        type: 'tool_start',
+        content: event.message || 'Starting analysis...',
+        timestamp: new Date(),
+        isComplete: true
+      }])
     }
   }, [])
 
   const reset = useCallback(() => {
+    // Cancel any ongoing operations
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+    }
+    
     setMessages([])
     setIsStreaming(false)
     setError(null)
+    setConnectionState({
+      isConnected: false,
+      isConnecting: false,
+      retryCount: 0
+    })
+    lastPopupConfigRef.current = null
   }, [])
 
   return {
     messages,
     isStreaming,
     error,
+    connectionState,
     startOptimization,
+    retryConnection,
     reset
   }
 }
